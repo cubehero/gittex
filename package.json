@@ -7,13 +7,13 @@
   "homepage": "http://github.com/cubehero/gittex",
   "bugs": {
     "url": "http://github.com/cubehero/gittex/issues",
-  } 
+  },
   "main": "index.coffee",
   "private": true,
   "repository": {
     "type": "git",
     "url": "http://github.com/cubehero/gittex.git"
-  }
+  },
   "dependencies": {
     "underscore": "1.3.x",
     "async": "0.1.x",
