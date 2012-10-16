@@ -6,7 +6,7 @@
   "keywords": ["git"],
   "homepage": "http://github.com/cubehero/gittex",
   "bugs": {
-    "url": "http://github.com/cubehero/gittex/issues",
+    "url": "http://github.com/cubehero/gittex/issues"
   },
   "main": "index.coffee",
   "private": true,
