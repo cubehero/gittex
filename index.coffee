@@ -132,4 +132,13 @@ exports.findPreviousBlob = (repo, currCommit, entryToFind, callback) ->
 
   )
 
+exports.openCurrAndPrev = (repoPath, currSha, prevSha, callback) ->
+  gitteh.openRepository repoPath, (err, repo) ->
+    callback(err) if err?
+    # FIXME getBlob throws errors too apparently, if argument 0 is not an oid
+    repo.getBlob currSha, (err, currBlob) ->
+      callback(err) if err?
+      repo.getBlob prevSha, (err, prevBlob) ->
+        callback(err, currBlob, prevBlob)
+
 

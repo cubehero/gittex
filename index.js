@@ -100,4 +100,16 @@
     });
   };
 
+  exports.openCurrAndPrev = function(repoPath, currSha, prevSha, callback) {
+    return gitteh.openRepository(repoPath, function(err, repo) {
+      if (err != null) callback(err);
+      return repo.getBlob(currSha, function(err, currBlob) {
+        if (err != null) callback(err);
+        return repo.getBlob(prevSha, function(err, prevBlob) {
+          return callback(err, currBlob, prevBlob);
+        });
+      });
+    });
+  };
+
 }).call(this);
