@@ -9,6 +9,14 @@
 
   gitteh = require('gitteh');
 
+  exports.isFile = function(entry) {
+    return entry.attributes === 33188;
+  };
+
+  exports.isDirectory = function(entry) {
+    return entry.attributes === 16384;
+  };
+
   exports.find_common_ancestor = function(oldrev, newrev, callback) {
     return child.exec("git merge-base " + oldrev + " " + newrev, {
       cwd: path.join(__dirname, '..')
@@ -40,27 +48,21 @@
     });
   };
 
-  exports.isFile = function(entry) {
-    return entry.attributes === 33188;
-  };
-
-  exports.isDirectory = function(entry) {
-    return entry.attributes === 16384;
-  };
-
   exports.walkTree = function(repo, commit, callback, doneCallback) {
-    var walkTreeHelper;
+    var that, walkTreeHelper;
+    that = this;
     walkTreeHelper = function(treeSha, currPath, iteratorCallback, doneCallback) {
       return repo.getTree(treeSha, function(err, tree) {
+        var _this = this;
         if (err != null) doneCallback(err);
         return async.waterfall([
           function(seriesNext) {
-            return async.forEach(tree.entries.filter(this.isFile), function(entry, forEachFileNext) {
+            return async.forEach(tree.entries.filter(that.isFile), function(entry, forEachFileNext) {
               entry.path = currPath;
               return iteratorCallback(entry, forEachFileNext);
             }, seriesNext);
           }, function(seriesNext) {
-            return async.forEach(tree.entries.filter(this.isDirectory), function(entry, forEachDirNext) {
+            return async.forEach(tree.entries.filter(that.isDirectory), function(entry, forEachDirNext) {
               var newCurrPath;
               newCurrPath = path.join(currPath, entry.name);
               return walkTreeHelper(entry.id, newCurrPath, iteratorCallback, function(err, currPath) {

@@ -8,6 +8,13 @@ path = require('path')
 async = require('async')
 gitteh = require('gitteh')
 
+# if a tree entry is a file.
+exports.isFile = (entry) -> entry.attributes is 33188
+
+# if a tree entry is a directory.
+# 16384 == 40000 in octal (which is directory attribute in Git).
+exports.isDirectory = (entry) -> entry.attributes is 16384
+
 # Find the common ancestor between old and new revs
 # and then yield all commits that need to be diff'd
 #
@@ -52,13 +59,6 @@ exports.eachNewCommit = (repo, oldrev, newrev, callback, doneCallback) ->
     )
   )
 
-# if a tree entry is a file.
-exports.isFile = (entry) -> entry.attributes is 33188
-
-# if a tree entry is a directory.
-# 16384 == 40000 in octal (which is directory attribute in Git).
-exports.isDirectory = (entry) -> entry.attributes is 16384
-
 # walk the tree breadth first and return each file
 #
 # @param - Repository - repo
@@ -69,6 +69,7 @@ exports.isDirectory = (entry) -> entry.attributes is 16384
 # @param - Function - doneCallback(err)
 #   Error - err
 exports.walkTree = (repo, commit, callback, doneCallback) ->
+  that = @
 
   # should start with walkTreeHelper(commit.tree, '/', [], (err) -> )
   walkTreeHelper = (treeSha, currPath, iteratorCallback, doneCallback) ->
@@ -76,8 +77,8 @@ exports.walkTree = (repo, commit, callback, doneCallback) ->
       doneCallback(err) if err?
 
       async.waterfall([
-        (seriesNext) ->
-          async.forEach(tree.entries.filter(@isFile),
+        (seriesNext) =>
+          async.forEach(tree.entries.filter(that.isFile),
             (entry, forEachFileNext) ->
               entry.path = currPath
               iteratorCallback(entry, forEachFileNext)
@@ -85,7 +86,7 @@ exports.walkTree = (repo, commit, callback, doneCallback) ->
           )
         ,
         (seriesNext) ->
-          async.forEach(tree.entries.filter(@isDirectory),
+          async.forEach(tree.entries.filter(that.isDirectory),
             (entry, forEachDirNext) ->
               newCurrPath = path.join(currPath, entry.name)
               # console.log(" going one level down...#{newCurrPath}")
@@ -111,8 +112,6 @@ exports.walkTree = (repo, commit, callback, doneCallback) ->
     # finished processing entire tree
     doneCallback(err)
   )
-
-# walk the tree and return each file filtered by condition
 
 exports.findPreviousBlob = (repo, currCommit, entryToFind, callback) ->
   # TODO currently don't know what to do about multiple parents
