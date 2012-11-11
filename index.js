@@ -84,6 +84,26 @@
     });
   };
 
+  exports.findInTree = function(repo, commit, comparison, callback) {
+    var comp, files;
+    files = [];
+    if (typeof comparison === "string") {
+      comp = function(entry) {
+        return entry.name.match(comparison) !== null;
+      };
+    } else if (typeof comparison === "function") {
+      comp = comparison;
+    } else {
+      throw new Error("Comparison is not a string or function");
+    }
+    return this.walkTree(repo, commit, function(entry, walkTreeNext) {
+      if (comp(entry) === true) files.push(entry);
+      return walkTreeNext();
+    }, function(err) {
+      return callback(err, files);
+    });
+  };
+
   exports.findPreviousBlob = function(repo, currCommit, entryToFind, callback) {
     var prevSha;
     prevSha = currCommit.parents[0];

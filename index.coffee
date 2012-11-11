@@ -112,6 +112,35 @@ exports.walkTree = (repo, commit, callback, doneCallback) ->
     # finished processing entire tree
     doneCallback(err)
   )
+  
+# finds a file in the tree matching the comparison criteria. Comparison
+# can either be a regex string or a function that takes entry as a parameter
+# and returns true or false
+#
+# repo - the repository
+# commit - the commit to look in the tree
+# comparison - a regex string
+#   or a function(entry), where entry is the data structure in gitteh
+# callback - function(err, files)
+#   returns err object, and an array of matching files
+#
+exports.findInTree = (repo, commit, comparison, callback) ->
+  files = []
+
+  if typeof comparison is "string"
+    comp = (entry) -> entry.name.match(comparison) isnt null
+  else if typeof comparison is "function"
+    comp = comparison
+  else
+    throw new Error("Comparison is not a string or function")
+
+  @walkTree(repo, commit, (entry, walkTreeNext) ->
+    if comp(entry) is true
+      files.push(entry)
+    walkTreeNext()
+  , (err) ->
+    callback(err, files)
+  )
 
 exports.findPreviousBlob = (repo, currCommit, entryToFind, callback) ->
   # TODO currently don't know what to do about multiple parents
