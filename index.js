@@ -17,37 +17,6 @@
     return entry.attributes === 16384;
   };
 
-  exports.find_common_ancestor = function(oldrev, newrev, callback) {
-    return child.exec("git merge-base " + oldrev + " " + newrev, {
-      cwd: path.join(__dirname, '..')
-    }, function(err, stdout, stdin) {
-      var common_sha;
-      if (err != null) {
-        callback(err);
-        return;
-      }
-      common_sha = stdout.replace(/\s+/, '');
-      return callback(null, common_sha);
-    });
-  };
-
-  exports.eachNewCommit = function(repo, oldrev, newrev, callback, doneCallback) {
-    return this.find_common_ancestor(oldrev, newrev, function(err, common_sha) {
-      var commit, commits, walker;
-      walker = repo.createWalker();
-      walker.sort(gitteh.GIT_SORT_TOPOLOGICAL);
-      walker.push(newrev);
-      commits = [];
-      while ((commit = walker.next())) {
-        if (commit.id === common_sha) break;
-        commits.push(commit);
-      }
-      return async.forEachSeries(commits, callback, function(err) {
-        return doneCallback(err, commits.length);
-      });
-    });
-  };
-
   exports.walkTree = function(repo, commit, callback, doneCallback) {
     var that, walkTreeHelper;
     that = this;
@@ -102,6 +71,76 @@
     }, function(err) {
       return callback(err, files);
     });
+  };
+
+  exports.isExistInTree = function(fileName, treeSha, repo) {
+    var entry, sha, tree, _i, _len, _ref;
+    tree = repo.getTree(treeSha);
+    _ref = tree.entries;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      entry = _ref[_i];
+      if (entry.attributes === 33188) {
+        if (entry.name === fileName) return entry.id;
+      } else {
+        sha = this.isExistInTree(fileName, entry.id, repo);
+        if (sha) return sha;
+      }
+    }
+    return null;
+  };
+
+  exports.find_common_ancestor = function(oldrev, newrev, callback) {
+    return child.exec("git merge-base " + oldrev + " " + newrev, {
+      cwd: path.join(__dirname, '..')
+    }, function(err, stdout, stdin) {
+      var common_sha;
+      if (err != null) {
+        callback(err);
+        return;
+      }
+      common_sha = stdout.replace(/\s+/, '');
+      return callback(null, common_sha);
+    });
+  };
+
+  exports.eachNewCommit = function(repo, oldrev, newrev, callback, doneCallback) {
+    return this.find_common_ancestor(oldrev, newrev, function(err, common_sha) {
+      var commit, commits, walker;
+      walker = repo.createWalker();
+      walker.sort(gitteh.GIT_SORT_TOPOLOGICAL);
+      walker.push(newrev);
+      commits = [];
+      while ((commit = walker.next())) {
+        if (commit.id === common_sha) break;
+        commits.push(commit);
+      }
+      return async.forEachSeries(commits, callback, function(err) {
+        return doneCallback(err, commits.length);
+      });
+    });
+  };
+
+  exports.fileHistory = function(repo, commitSha, fileName) {
+    var blobSha, commit, commits, headRef, lastBlobSha, walker;
+    lastBlobSha = null;
+    commits = [];
+    headRef = repo.getReference('HEAD');
+    headRef = headRef.resolve();
+    walker = repo.createWalker();
+    walker.sort(gitteh.GIT_SORT_TOPOLOGICAL);
+    walker.push(headRef.target);
+    while ((commit = walker.next())) {
+      blobSha = this.isExistInTree(fileName, commit.tree, repo);
+      console.log("blobSha: " + blobSha);
+      if ((blobSha != null) && blobSha !== lastBlobSha) {
+        commits.push({
+          commit: commit,
+          blob: repo.getBlob(blobSha)
+        });
+        lastBlobSha = blobSha;
+      }
+    }
+    return commits;
   };
 
   exports.findPreviousBlob = function(repo, currCommit, entryToFind, callback) {
