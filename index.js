@@ -173,4 +173,104 @@
     });
   };
 
+  exports.nativeGit = function(cmd) {
+    var arg, args, argv, callback, gitBinary, gitCmd, gitDir, isDebug, options, options_to_argv, stderrBufs, stdoutBufs, workTree, _i, _j, _len, _len2, _result;
+    options_to_argv = function(options) {
+      var argv, key, val;
+      argv = [];
+      for (key in options) {
+        val = options[key];
+        if (key.toString().length === 1) {
+          if (val === true) {
+            argv.push("-" + key);
+          } else if (val === false) {} else {
+            argv.push("-" + key);
+            argv.push(val.toString());
+          }
+        } else {
+          if (val === true) {
+            argv.push("--" + (key.toString().replace('_', '-')));
+          } else if (val === false) {} else {
+            argv.push("--" + (key.toString().replace('_', '-')) + "=" + val);
+          }
+        }
+      }
+      return argv;
+    };
+    callback = arguments[arguments.length - 1];
+    if (arguments.length === 4) {
+      options = arguments[1];
+      args = arguments[2];
+    } else if (arguments.length === 3) {
+      options = arguments[1];
+      args = [];
+    } else if (arguments.length === 2) {
+      options = {};
+      args = [];
+    } else {
+      options = {};
+      args = [];
+      callback = function() {};
+    }
+    options = options || {};
+    isDebug = options.debug;
+    delete options.debug;
+    args = args || [];
+    _result = [];
+    for (_i = 0, _len = args.length; _i < _len; _i++) {
+      arg = args[_i];
+      _result.push(arg.toString());
+    }
+    args = _result;
+    _result = [];
+    for (_j = 0, _len2 = args.length; _j < _len2; _j++) {
+      arg = args[_j];
+      if (arg.length !== 0) _result.push(arg);
+    }
+    args = _result;
+    gitBinary = 'git';
+    gitDir = options.git_dir;
+    delete options.git_dir;
+    workTree = options.work_tree;
+    delete options.work_tree;
+    argv = [];
+    if (gitDir != null) argv.push("--git-dir=" + gitDir);
+    if (workTree != null) argv.push("--work-tree=" + workTree);
+    argv.push(cmd);
+    argv = argv.concat(options_to_argv(options));
+    argv = argv.concat(args);
+    if (isDebug === true) console.log(gitBinary, argv);
+    gitCmd = child.spawn(gitBinary, argv, options);
+    stdoutBufs = [];
+    gitCmd.stdout.on('data', function(data) {
+      if (isDebug === true) console.log(data.toString());
+      return stdoutBufs.push(data);
+    });
+    stderrBufs = [];
+    gitCmd.stderr.on('data', function(data) {
+      if (isDebug === true) console.log(data.toString());
+      return stderrBufs.push(data);
+    });
+    gitCmd.on('exit', function(exitCode, signal) {
+      var buf, err, stderrBuf, stdoutBuf, _k, _l, _len3, _len4;
+      if (exitCode > 1) {
+        err = new Error("error on command: " + exitCode);
+        callback(err, stdoutBuf, stderrBuf);
+        return;
+      }
+      stdoutBuf = "";
+      for (_k = 0, _len3 = stdoutBufs.length; _k < _len3; _k++) {
+        buf = stdoutBufs[_k];
+        stdoutBuf = stdoutBuf.concat(buf.toString());
+      }
+      stderrBuf = "";
+      for (_l = 0, _len4 = stderrBufs.length; _l < _len4; _l++) {
+        buf = stderrBufs[_l];
+        stderrBuf = stderrBuf.concat(buf.toString());
+      }
+      return callback(null, stdoutBuf, stderrBuf);
+    });
+    return gitCmd;
+  };
+
 }).call(this);

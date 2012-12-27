@@ -219,3 +219,134 @@ exports.openCurrAndPrev = (repoPath, currSha, prevSha, callback) ->
         callback(err, currBlob, prevBlob)
 
 
+# Execute a git command on the system. A port of Grit's native cmd in git.rb
+#
+# cmd - The name of the git command as a Symbol. Underscores are
+#   converted to dashes as in :rev_parse => 'rev-parse'.
+# options - Command line option arguments passed to the git command.
+#   Single char keys are converted to short options (:a => -a).
+#   Multi-char keys are converted to long options (:arg => '--arg').
+#   Underscores in keys are converted to dashes. These special options
+#   are used to control command execution and are not passed in command
+#   invocation:
+#     :git_dir - where the root path of the repository is
+#     :work_tree - where the working tree is
+#     :debug - Show debug information
+#
+#     # The following aren't yet implemented
+#     :timeout - Maximum amount of time the command can run for before
+#       being aborted. When true, use Grit::Git.git_timeout; when numeric,
+#       use that number of seconds; when false or 0, disable timeout.
+#     :base - Set false to avoid passing the --git-dir argument when
+#       invoking the git command.
+#     :env - Hash of environment variable key/values that are set on the
+#       child process.
+#     :raise - When set true, commands that exit with a non-zero status
+#       raise a CommandFailed exception. This option is available only on
+#       platforms that support fork(2).
+#     :process_info - By default, a single string with output written to
+#       the process's stdout is returned. Setting this option to true
+#       results in a [exitstatus, out, err] tuple being returned instead.
+# args - Non-option arguments passed on the command line.
+#
+# callbac - function(err, stdout, stderr)
+#
+# Examples
+#   git.native(:rev_list, {:max_count => 10, :header => true}, "master")
+#
+# Returns a String with all output written to the child process's stdout
+#   when the :process_info option is not set.
+# Returns a [exitstatus, out, err] tuple when the :process_info option is
+#   set. The exitstatus is an small integer that was the process's exit
+#   status. The out and err elements are the data written to stdout and
+#   stderr as Strings.
+# Raises Grit::Git::GitTimeout when the timeout is exceeded or when more
+#   than Grit::Git.git_max_size bytes are output.
+# Raises Grit::Git::CommandFailed when the :raise option is set true and the
+#   git command exits with a non-zero exit status. The CommandFailed's #command,
+#   #exitstatus, and #err attributes can be used to retrieve additional
+#   detail about the error.
+#
+exports.nativeGit = (cmd) ->
+  options_to_argv = (options) ->
+    argv = []
+    for key, val of options
+      if key.toString().length is 1
+        if val is true
+          argv.push "-#{key}"
+        else if val is false
+          # ignore
+        else
+          argv.push "-#{key}"
+          argv.push val.toString()
+      else
+        if val is true
+          argv.push "--#{key.toString().replace('_', '-')}"
+        else if val is false
+          #ignore
+        else
+          argv.push "--#{key.toString().replace('_', '-')}=#{val}"
+    argv
+
+  callback = arguments[arguments.length - 1]
+  if arguments.length is 4        # nativeGit(cmd, options, args, callback)
+    options = arguments[1]
+    args = arguments[2]
+  else if arguments.length is 3   # nativeGit(cmd, options, callback)
+    options = arguments[1]
+    args = []
+  else if arguments.length is 2   # nativeGit(cmd, callback)
+    options = {}
+    args = []
+  else                            # nativeGit(cmd)
+    options = {}
+    args = []
+    callback = () ->
+
+  options = options || {}
+  isDebug = options.debug; delete options.debug
+  args = args || []
+  _result = []; for arg in args
+    _result.push arg.toString()
+  args = _result
+  _result = []; for arg in args
+    _result.push(arg) if arg.length isnt 0
+  args = _result
+
+  gitBinary = 'git'
+  gitDir =  options.git_dir; delete options.git_dir
+  workTree = options.work_tree; delete options.work_tree
+
+  argv = []
+  argv.push "--git-dir=#{gitDir}" if gitDir?
+  argv.push "--work-tree=#{workTree}" if workTree?
+  argv.push cmd
+  argv = argv.concat options_to_argv(options)
+  argv = argv.concat args
+
+  console.log(gitBinary, argv) if isDebug is true
+  gitCmd = child.spawn(gitBinary, argv, options)
+  stdoutBufs = []
+  gitCmd.stdout.on('data', (data) ->
+    console.log(data.toString()) if isDebug is true
+    stdoutBufs.push(data)
+  )
+  stderrBufs = []
+  gitCmd.stderr.on('data', (data) ->
+    console.log(data.toString()) if isDebug is true
+    stderrBufs.push(data)
+  )
+
+  gitCmd.on 'exit', (exitCode, signal) ->
+    if exitCode > 1
+      err = new Error("error on command: #{exitCode}")
+      callback(err, stdoutBuf, stderrBuf)
+      return
+    stdoutBuf = ""; for buf in stdoutBufs
+      stdoutBuf = stdoutBuf.concat(buf.toString())
+    stderrBuf = ""; for buf in stderrBufs
+      stderrBuf = stderrBuf.concat(buf.toString())
+    callback(null, stdoutBuf, stderrBuf)
+
+  return gitCmd
+
