@@ -7,6 +7,7 @@ path = require('path')
 # FIXME how to include async and gitteh in post commit hooks?
 async = require('async')
 gitteh = require('gitteh')
+fs = require('fs')
 
 ####### Tree related gitteh extensions #######
 
@@ -218,6 +219,17 @@ exports.openCurrAndPrev = (repoPath, currSha, prevSha, callback) ->
       repo.getBlob prevSha, (err, prevBlob) ->
         callback(err, currBlob, prevBlob)
 
+exports.runPostReceiveHook = (repoPath, oldrev, newrev, refName, callback) ->
+  hookPath = path.join(repoPath, 'hooks', 'post-receive')
+
+  fs.stat(hookPath, (err, stat) ->
+    (callback(err); return) if (err? and err.errno isnt 34)
+    if stat?
+      hook = child.exec("#{hookPath}", callback)
+      hook.stdin.end("#{oldrev} #{newrev} #{refName}")
+    else
+      callback(null, "", "")
+  )
 
 # Execute a git command on the system. A port of Grit's native cmd in git.rb
 #

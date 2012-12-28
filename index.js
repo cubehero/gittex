@@ -1,5 +1,5 @@
 (function() {
-  var async, child, gitteh, path;
+  var async, child, fs, gitteh, path;
 
   child = require('child_process');
 
@@ -8,6 +8,8 @@
   async = require('async');
 
   gitteh = require('gitteh');
+
+  fs = require('fs');
 
   exports.isFile = function(entry) {
     return entry.attributes === 33188;
@@ -170,6 +172,24 @@
           return callback(err, currBlob, prevBlob);
         });
       });
+    });
+  };
+
+  exports.runPostReceiveHook = function(repoPath, oldrev, newrev, refName, callback) {
+    var hookPath;
+    hookPath = path.join(repoPath, 'hooks', 'post-receive');
+    return fs.stat(hookPath, function(err, stat) {
+      var hook;
+      if ((err != null) && err.errno !== 34) {
+        callback(err);
+        return;
+      }
+      if (stat != null) {
+        hook = child.exec("" + hookPath, callback);
+        return hook.stdin.end("" + oldrev + " " + newrev + " " + refName);
+      } else {
+        return callback(null, "", "");
+      }
     });
   };
 
