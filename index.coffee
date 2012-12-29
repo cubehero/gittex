@@ -231,15 +231,9 @@ exports.runPostReceiveHook = (repoPath, oldrev, newrev, refName, callback) ->
     if stat?
       console.log 'has post-receive'
       console.log 'hookPath', hookPath
-      console.log '#hookPath', "#{hookPath}"
       console.log "#{oldrev} #{newrev} #{refName}"
 
-      hook = child.exec("#{hookPath}", (err, stdout, stderr) ->
-        console.log "runPostRecieveHookError:", err
-        console.log "runPost stdout:", stdout
-        console.log "runPost stderr:", stderr
-        callback(err, stdout, stderr)
-      )
+      hook = child.exec(hookPath, callback)
       hook.stdin.end("#{oldrev} #{newrev} #{refName}")
     else
       callback(null, "", "")
