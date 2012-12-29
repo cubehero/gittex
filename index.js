@@ -191,7 +191,13 @@
         console.log('has post-receive');
         console.log('hookPath', hookPath);
         console.log('#hookPath', "" + hookPath);
-        hook = child.exec("" + hookPath, callback);
+        console.log("" + oldrev + " " + newrev + " " + refName);
+        hook = child.exec("" + hookPath, function(err, stdout, stderr) {
+          console.log("runPostRecieveHookError:", err);
+          console.log("runPost stdout:", stdout);
+          console.log("runPost stderr:", stderr);
+          return callback(err, stdout, stderr);
+        });
         return hook.stdin.end("" + oldrev + " " + newrev + " " + refName);
       } else {
         return callback(null, "", "");
