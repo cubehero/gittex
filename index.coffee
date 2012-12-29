@@ -222,9 +222,16 @@ exports.openCurrAndPrev = (repoPath, currSha, prevSha, callback) ->
 exports.runPostReceiveHook = (repoPath, oldrev, newrev, refName, callback) ->
   hookPath = path.join(repoPath, 'hooks', 'post-receive')
 
+  console.log 'in gitteh'
+
   fs.stat(hookPath, (err, stat) ->
+    console.log 'statted ', repoPath
     (callback(err); return) if (err? and err.errno isnt 34)
+    console.log 'if stat?'
     if stat?
+      console.log 'has post-receive'
+      console.log 'hookPath', hookPath
+      console.log '#hookPath', "#{hookPath}"
       hook = child.exec("#{hookPath}", callback)
       hook.stdin.end("#{oldrev} #{newrev} #{refName}")
     else

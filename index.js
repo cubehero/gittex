@@ -178,13 +178,19 @@
   exports.runPostReceiveHook = function(repoPath, oldrev, newrev, refName, callback) {
     var hookPath;
     hookPath = path.join(repoPath, 'hooks', 'post-receive');
+    console.log('in gitteh');
     return fs.stat(hookPath, function(err, stat) {
       var hook;
+      console.log('statted ', repoPath);
       if ((err != null) && err.errno !== 34) {
         callback(err);
         return;
       }
+      console.log('if stat?');
       if (stat != null) {
+        console.log('has post-receive');
+        console.log('hookPath', hookPath);
+        console.log('#hookPath', "" + hookPath);
         hook = child.exec("" + hookPath, callback);
         return hook.stdin.end("" + oldrev + " " + newrev + " " + refName);
       } else {
