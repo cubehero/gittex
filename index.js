@@ -200,7 +200,7 @@
   };
 
   exports.nativeGit = function(cmd) {
-    var arg, args, argv, callback, gitBinary, gitCmd, gitDir, isDebug, options, options_to_argv, stderrBufs, stdoutBufs, workTree, _i, _j, _len, _len2, _result;
+    var arg, args, argv, callback, gitBinary, gitCmd, gitDir, isDebug, options, options_to_argv, spawnOptions, stderrBufs, stdoutBufs, workTree, _i, _j, _len, _len2, _result;
     options_to_argv = function(options) {
       var argv, key, val;
       argv = [];
@@ -241,6 +241,11 @@
     options = options || {};
     isDebug = options.debug;
     delete options.debug;
+    spawnOptions = {};
+    if (options.cwd != null) {
+      spawnOptions.cwd = options.cwd;
+      delete options.cwd;
+    }
     args = args || [];
     _result = [];
     for (_i = 0, _len = args.length; _i < _len; _i++) {
@@ -265,8 +270,8 @@
     argv.push(cmd);
     argv = argv.concat(options_to_argv(options));
     argv = argv.concat(args);
-    if (isDebug === true) console.log(gitBinary, argv);
-    gitCmd = child.spawn(gitBinary, argv, options);
+    if (isDebug === true) console.log(gitBinary, argv, spawnOptions);
+    gitCmd = child.spawn(gitBinary, argv, spawnOptions);
     stdoutBufs = [];
     gitCmd.stdout.on('data', function(data) {
       if (isDebug === true) console.log(data.toString());

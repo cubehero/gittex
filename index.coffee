@@ -325,6 +325,11 @@ exports.nativeGit = (cmd) ->
 
   options = options || {}
   isDebug = options.debug; delete options.debug
+  spawnOptions = {}
+  if options.cwd?
+    spawnOptions.cwd = options.cwd
+    delete options.cwd
+
   args = args || []
   _result = []; for arg in args
     _result.push arg.toString()
@@ -344,8 +349,8 @@ exports.nativeGit = (cmd) ->
   argv = argv.concat options_to_argv(options)
   argv = argv.concat args
 
-  console.log(gitBinary, argv) if isDebug is true
-  gitCmd = child.spawn(gitBinary, argv, options)
+  console.log(gitBinary, argv, spawnOptions) if isDebug is true
+  gitCmd = child.spawn(gitBinary, argv, spawnOptions)
   stdoutBufs = []
   gitCmd.stdout.on('data', (data) ->
     console.log(data.toString()) if isDebug is true
