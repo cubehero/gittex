@@ -1,6 +1,6 @@
 {
   "name": "gittex",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "Wil Chung",
   "description": "Extensions and helpers for gitteh which reads git repositories",
   "keywords": ["git"],
