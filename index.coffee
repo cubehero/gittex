@@ -257,6 +257,10 @@ exports.commit = (workingPath, author, message, callback) ->
 exports.push = (workingPath, callback) ->
   @nativeGit('push', { cwd: workingPath, u: 'origin' }, ['master'], callback)
 
+# stages a file removal from the repo
+exports.remove = (workingPath, filePath, callback) ->
+  @nativeGit('rm', { debug: true, cwd: workingPath }, [filePath], callback)
+
 ##### Raw execution of git through a native command line call #####
 
 # Execute a git command on the system. A port of Grit's native cmd in git.rb

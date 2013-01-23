@@ -234,6 +234,13 @@
     }, ['master'], callback);
   };
 
+  exports.remove = function(workingPath, filePath, callback) {
+    return this.nativeGit('rm', {
+      debug: true,
+      cwd: workingPath
+    }, [filePath], callback);
+  };
+
   exports.nativeGit = function(cmd) {
     var arg, args, argv, callback, gitBinary, gitCmd, gitDir, isDebug, options, options_to_argv, spawnOptions, stderrBufs, stdoutBufs, workTree, _i, _j, _len, _len2, _result;
     options_to_argv = function(options) {
