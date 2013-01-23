@@ -318,9 +318,12 @@
       return stderrBufs.push(data);
     });
     gitCmd.on('exit', function(exitCode, signal) {
-      var buf, err, stderrBuf, stdoutBuf, _k, _l, _len3, _len4;
+      var buf, err, gitErrMsg, stderrBuf, stdoutBuf, _k, _l, _len3, _len4;
       if (exitCode > 1) {
-        err = new Error("error on command: " + exitCode);
+        gitErrMsg = "gittex error on native command: " + exitCode;
+        err = new Error(gitErrMsg);
+        err.msg = gitErrMsg;
+        err.errno = exitCode;
         callback(err, stdoutBuf, stderrBuf);
         return;
       }

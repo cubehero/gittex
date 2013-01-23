@@ -384,7 +384,10 @@ exports.nativeGit = (cmd) ->
 
   gitCmd.on 'exit', (exitCode, signal) ->
     if exitCode > 1
-      err = new Error("error on command: #{exitCode}")
+      gitErrMsg = "gittex error on native command: #{exitCode}"
+      err = new Error(gitErrMsg)
+      err.msg = gitErrMsg
+      err.errno = exitCode
       callback(err, stdoutBuf, stderrBuf)
       return
     stdoutBuf = ""; for buf in stdoutBufs
