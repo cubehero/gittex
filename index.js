@@ -199,6 +199,41 @@
     });
   };
 
+  exports.clone = function(repoPath, workingPath, callback) {
+    return this.nativeGit('clone', {
+      debug: true
+    }, [repoPath, workingPath], callback);
+  };
+
+  exports.pull = function(workingPath, callback) {
+    return this.nativeGit('pull', {
+      debug: true,
+      cwd: workingPath
+    }, callback);
+  };
+
+  exports.add = function(workingPath, callback) {
+    return this.nativeGit('add', {
+      debug: true,
+      cwd: workingPath
+    }, ['.'], callback);
+  };
+
+  exports.commit = function(workingPath, author, message, callback) {
+    return this.nativeGit('commit', {
+      author: author,
+      m: message,
+      cwd: workingPath
+    }, callback);
+  };
+
+  exports.push = function(workingPath, callback) {
+    return this.nativeGit('push', {
+      cwd: workingPath,
+      u: 'origin'
+    }, ['master'], callback);
+  };
+
   exports.nativeGit = function(cmd) {
     var arg, args, argv, callback, gitBinary, gitCmd, gitDir, isDebug, options, options_to_argv, spawnOptions, stderrBufs, stdoutBufs, workTree, _i, _j, _len, _len2, _result;
     options_to_argv = function(options) {

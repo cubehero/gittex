@@ -239,6 +239,26 @@ exports.runPostReceiveHook = (repoPath, oldrev, newrev, refName, callback) ->
       callback(null, "", "")
   )
 
+##### Committing, Adding, Pushing, and Pulling
+
+exports.clone = (repoPath, workingPath, callback) ->
+  @nativeGit('clone', { debug: true }, [repoPath, workingPath], callback)
+
+exports.pull = (workingPath, callback) ->
+  @nativeGit('pull', { debug: true, cwd: workingPath }, callback)
+
+exports.add = (workingPath, callback) ->
+  @nativeGit('add', { debug: true, cwd: workingPath }, ['.'], callback)
+
+exports.commit = (workingPath, author, message, callback) ->
+  @nativeGit('commit', { author: author, m: message, cwd: workingPath }, callback)
+
+# defaults to pushing to origin:master
+exports.push = (workingPath, callback) ->
+  @nativeGit('push', { cwd: workingPath, u: 'origin' }, ['master'], callback)
+
+##### Raw execution of git through a native command line call #####
+
 # Execute a git command on the system. A port of Grit's native cmd in git.rb
 #
 # cmd - The name of the git command as a Symbol. Underscores are
@@ -269,7 +289,7 @@ exports.runPostReceiveHook = (repoPath, oldrev, newrev, refName, callback) ->
 #       results in a [exitstatus, out, err] tuple being returned instead.
 # args - Non-option arguments passed on the command line.
 #
-# callbac - function(err, stdout, stderr)
+# callback - function(err, stdout, stderr)
 #
 # Examples
 #   git.native(:rev_list, {:max_count => 10, :header => true}, "master")
