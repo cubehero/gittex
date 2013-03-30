@@ -60,9 +60,8 @@
     });
   };
 
-  exports.findInTree = function(repo, commit, comparison, callback) {
-    var comp, files;
-    files = [];
+  exports.selectFor = function(comparison, callback) {
+    var comp;
     if (typeof comparison === "string") {
       comp = function(entry) {
         return entry.name.match(comparison) !== null;
@@ -72,12 +71,22 @@
     } else {
       throw new Error("Comparison is not a string or function");
     }
-    return this.walkTree(repo, commit, function(entry, walkTreeNext) {
+    return function(entry, walkTreeNext) {
       if (comp(entry) === true) {
-        files.push(entry);
+        return callback(entry, walkTreeNext);
+      } else {
+        return walkTreeNext();
       }
+    };
+  };
+
+  exports.findInTree = function(repo, commit, comparison, callback) {
+    var files;
+    files = [];
+    return this.walkTree(repo, commit, this.selectFor(comparison, function(entry, walkTreeNext) {
+      files.push(entry);
       return walkTreeNext();
-    }, function(err) {
+    }), function(err) {
       return callback(err, files);
     });
   };

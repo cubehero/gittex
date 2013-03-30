@@ -70,6 +70,20 @@ exports.walkTree = (repo, commit, callback, doneCallback) ->
     doneCallback(err)
   )
 
+exports.selectFor = (comparison, callback) ->
+  if typeof comparison is "string"
+    comp = (entry) -> entry.name.match(comparison) isnt null
+  else if typeof comparison is "function"
+    comp = comparison
+  else
+    throw new Error("Comparison is not a string or function")
+
+  (entry, walkTreeNext) ->
+    if comp(entry) is true
+      callback(entry, walkTreeNext)
+    else
+      walkTreeNext()
+
 # finds a file in the tree matching the comparison criteria. Comparison
 # can either be a regex string or a function that takes entry as a parameter
 # and returns true or false
@@ -83,20 +97,12 @@ exports.walkTree = (repo, commit, callback, doneCallback) ->
 #
 exports.findInTree = (repo, commit, comparison, callback) ->
   files = []
-
-  if typeof comparison is "string"
-    comp = (entry) -> entry.name.match(comparison) isnt null
-  else if typeof comparison is "function"
-    comp = comparison
-  else
-    throw new Error("Comparison is not a string or function")
-
-  @walkTree(repo, commit, (entry, walkTreeNext) ->
-    if comp(entry) is true
+  @walkTree(repo, commit,
+    @selectFor(comparison, (entry, walkTreeNext) ->
       files.push(entry)
-    walkTreeNext()
-  , (err) ->
-    callback(err, files)
+      walkTreeNext()
+    ),
+    (err) -> callback(err, files)
   )
 
 # Does a file exist within a tree? It recursively searches, breadth first
