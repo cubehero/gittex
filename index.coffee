@@ -56,22 +56,20 @@ exports.walkTree = (repo, commit, callback, doneCallback) ->
               )
             ,
             (err) ->
+              (seriesNext(err); return) if err?
               # console.log("finished all files and dirs in #{currPath}")
               seriesNext(null, currPath)
           )
-      ],
-        (err, results) ->
-          doneCallback(null, results)
-      )
+      ], doneCallback)
    
   walkTreeHelper(commit.tree, '/', (entry, next) ->
-    # console.log("fileName visited: #{path.join(currPath, entry.name)}")
+    # console.log("fileName visited: #{path.join(entry.name)}")
     callback(entry, next)
   , (err, currPath) ->
-    # finished processing entire tree
+    # console.log("finished processing entire tree")
     doneCallback(err)
   )
-  
+
 # finds a file in the tree matching the comparison criteria. Comparison
 # can either be a regex string or a function that takes entry as a parameter
 # and returns true or false
