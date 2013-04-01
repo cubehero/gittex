@@ -168,13 +168,18 @@
   };
 
   exports.findPreviousBlob = function(repo, currCommit, entryToFind, callback) {
-    var prevSha;
+    var prevSha,
+      _this = this;
     prevSha = currCommit.parents[0];
-    console.log(prevSha);
+    console.log('prevSha:', prevSha);
+    if (prevSha === null || typeof prevSha === 'undefined') {
+      callback(null, null, null);
+      return;
+    }
     return repo.getCommit(prevSha, function(err, prevCommit) {
       var foundEntry;
       foundEntry = null;
-      return this.walkTree(repo, prevCommit, function(entry, next) {
+      return _this.walkTree(repo, prevCommit, function(entry, next) {
         if (entry.path === entryToFind.path && entry.name === entryToFind.name) {
           foundEntry = entry;
         }

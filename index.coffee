@@ -199,10 +199,14 @@ exports.fileHistory = (repo, commitSha, fileName) ->
 exports.findPreviousBlob = (repo, currCommit, entryToFind, callback) ->
   # TODO currently don't know what to do about multiple parents
   prevSha = currCommit.parents[0]
-  console.log prevSha
-  repo.getCommit(prevSha, (err, prevCommit) ->
+  console.log 'prevSha:', prevSha
+  if prevSha == null or typeof prevSha is 'undefined'
+    (callback(null, null, null); return)
+
+  repo.getCommit(prevSha, (err, prevCommit) =>
     # look for entry's blob
-    # Since we can't break, we just have to flag what we found and run through the entire tree
+    # Since we can't break, we just have to flag what we found
+    # and run through the entire tree
     foundEntry = null
     @walkTree(repo, prevCommit, (entry, next) ->
       if entry.path is entryToFind.path and entry.name is entryToFind.name
