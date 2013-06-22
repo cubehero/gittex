@@ -2,7 +2,7 @@
   "name": "gittex",
   "version": "0.1.1",
   "author": "Wil Chung",
-  "description": "Extensions and helpers for gitteh which reads git repositories",
+  "description": "Extensions and helpers for gitteh which reads git repositories.",
   "keywords": ["git"],
   "homepage": "http://github.com/cubehero/gittex",
   "bugs": {
